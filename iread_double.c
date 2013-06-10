@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 
 		                tmp = (char *) malloc(len+10);
 				strcpy(tmp, _coordX);
-				printf("tmp = %s \n",tmp);
+//				printf("tmp = %s \n",tmp);
 
 				MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhX);
 				MPI_File_set_view(fhX, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
@@ -172,13 +172,6 @@ int main(int argc, char *argv[]) {
 				MPI_Wait( &request, &status );
 				MPI_File_close(&fhZ);
 				
-				printf("bufX[1] = %g \n",bufX[1]);
-
-				errs = 0;
-				for(j=0; j<ndble; j++) {
-//					printf("bufX[%i] on master = %g\n",i,bufX[i]);
-				if(bufX[i]==0) errs++;
-				}
 
 			}
 		}
