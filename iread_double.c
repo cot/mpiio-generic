@@ -5,15 +5,20 @@
 #include <math.h>
 
 #define bigsize (65536*16) // 16*1024*65536
-/* Uses asynchronous I/O. Each process writes to separate files and
-   reads them back. The file name is taken as a command-line argument,
-   and the process rank is appended to it.*/
+#define iteration 1
 
 int main(int argc, char *argv[]) {
 	int size;
 	int lastsize;
-	int i, rank, computeprocs, totalprocs, ndble, len, ndbleperproc, ndblelastproc;
+	int i,iter;
+	int rank;
+	int computeprocs, totalprocs, ndbleperproc, ndblelastproc;
+	int ndble, len;
+
 	double *buf;
+	double part[3];
+	double force[3];
+
 	char *_coordX, *_coordY, *_coordZ;
 	char *tmp;
 	int errs=0;
@@ -68,7 +73,7 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 		MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fh, buf, ndble, MPI_DOUBLE, &request);
-//		MPI_Wait( &request, &status );
+		MPI_Wait( &request, &status );
 		MPI_File_close(&fh);
 		/* ------- */
 		strcpy(tmp, _coordY);
@@ -76,7 +81,7 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordY, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 		MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fh, buf, ndble, MPI_DOUBLE, &request);
-//		MPI_Wait( &request, &status );
+		MPI_Wait( &request, &status );
 		MPI_File_close(&fh);
 		/* ------- */
 		strcpy(tmp, _coordZ);
@@ -84,23 +89,26 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordZ, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 		MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fh, buf, ndble, MPI_DOUBLE, &request);
-//		MPI_Wait( &request, &status );
+		MPI_Wait( &request, &status );
 		MPI_File_close(&fh);
 
 	}
 /* Boucle iterative */
-	/* reopen the file and read the data back */
-	for (i=0; i<ndble; i++) {
-		buf[i] = 0;
+	for(iter=0;iter<iteration;iter++) {
+		/* reopen the file and read the data back */
+		for (i=0; i<ndble; i++) {
+			buf[i] = 0;
+		}
+		if(rank!=0) {
+			MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+			MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
+			MPI_File_iread(fh, buf, ndble, MPI_DOUBLE, &request);
+			MPI_Wait( &request, &status );
+			MPI_File_close(&fh);
+		}
 	}
-	if(rank!=0) {
-		MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
-		MPI_File_set_view(fh, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
-		MPI_File_iread(fh, buf, ndble, MPI_DOUBLE, &request);
-//		MPI_Wait( &request, &status );
-		MPI_File_close(&fh);
-	}
-	/* check if the data read is correct */
+
+/* Verification des donnees */
 	if(rank != 0) {
 		for (i=0; i<ndble; i++) {
 			if ( buf[i] != (rank*100000 + sqrt(i)) ) {
