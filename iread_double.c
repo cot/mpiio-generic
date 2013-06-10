@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhX);
 		MPI_File_set_view(fhX, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fhX, bufX, ndble, MPI_DOUBLE, &request);
-		MPI_Wait( &request, &status );
+//		MPI_Wait( &request, &status );
 		MPI_File_close(&fhX);
 		/* ------- */
 		strcpy(tmp, _coordY);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordY, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhY);
 		MPI_File_set_view(fhY, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fhY, bufY, ndble, MPI_DOUBLE, &request);
-		MPI_Wait( &request, &status );
+//		MPI_Wait( &request, &status );
 		MPI_File_close(&fhY);
 		/* ------- */
 		strcpy(tmp, _coordZ);
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 		MPI_File_open(MPI_COMM_SELF, _coordZ, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhZ);
 		MPI_File_set_view(fhZ, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 		MPI_File_iwrite(fhZ, bufZ, ndble, MPI_DOUBLE, &request);
-		MPI_Wait( &request, &status );
+//		MPI_Wait( &request, &status );
 		MPI_File_close(&fhZ);
 
 	}
@@ -117,19 +117,19 @@ int main(int argc, char *argv[]) {
 			MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhX);
 			MPI_File_set_view(fhX, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 			MPI_File_iread(fhX, bufX, ndble, MPI_DOUBLE, &request);
-			MPI_Wait( &request, &status );
+//			MPI_Wait( &request, &status );
 			MPI_File_close(&fhX);
 
 			MPI_File_open(MPI_COMM_SELF, _coordY, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhY);
 			MPI_File_set_view(fhY, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 			MPI_File_iread(fhY, bufY, ndble, MPI_DOUBLE, &request);
-			MPI_Wait( &request, &status );
+//			MPI_Wait( &request, &status );
 			MPI_File_close(&fhY);
 
 			MPI_File_open(MPI_COMM_SELF, _coordZ, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhZ);
 			MPI_File_set_view(fhZ, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 			MPI_File_iread(fhZ, bufZ, ndble, MPI_DOUBLE, &request);
-			MPI_Wait( &request, &status );
+//			MPI_Wait( &request, &status );
 			MPI_File_close(&fhZ);
 
 			_partX = 0.0;
@@ -145,7 +145,6 @@ int main(int argc, char *argv[]) {
 		for(i=1; i<computeprocs ; i++) {
 			/* MAJ des structures de donnees sur le master, bloc par bloc */
 			if(rank==0) {
-
 				sprintf(_coordX, "coordX.%d",  i);
 				sprintf(_coordY, "coordY.%d",  i);
 				sprintf(_coordZ, "coordZ.%d",  i);
@@ -157,22 +156,30 @@ int main(int argc, char *argv[]) {
 				MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhX);
 				MPI_File_set_view(fhX, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 				MPI_File_iread(fhX, bufX, ndble, MPI_DOUBLE, &request);
-				MPI_Wait( &request, &status );
+//				MPI_Wait( &request, &status );
 				MPI_File_close(&fhX);
 
 				MPI_File_open(MPI_COMM_SELF, _coordY, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhY);
 				MPI_File_set_view(fhY, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 				MPI_File_iread(fhY, bufY, ndble, MPI_DOUBLE, &request);
-				MPI_Wait( &request, &status );
+//				MPI_Wait( &request, &status );
 				MPI_File_close(&fhY);
 
 				MPI_File_open(MPI_COMM_SELF, _coordZ, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhZ);
 				MPI_File_set_view(fhZ, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
 				MPI_File_iread(fhZ, bufZ, ndble, MPI_DOUBLE, &request);
-				MPI_Wait( &request, &status );
+//				MPI_Wait( &request, &status );
 				MPI_File_close(&fhZ);
-				
-
+			}
+			/* Iteration sur le bloc de donnees pre - chargee sur le master  */
+			for( j=0; j<ndble; j++ ) {
+				/* BroadCast chaque valeur depuis master vers les esclaves  */
+				_partX = bufX[i] ;
+				_partY = bufY[i] ;
+				_partZ = bufZ[i] ;
+				MPI_Bcast(&_partX,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+				MPI_Bcast(&_partY,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+				MPI_Bcast(&_partZ,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
 			}
 		}
 
