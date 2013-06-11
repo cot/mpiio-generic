@@ -182,9 +182,9 @@ int main(int argc, char *argv[]) {
 				MPI_Bcast(&_partX,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
 				MPI_Bcast(&_partY,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
 				MPI_Bcast(&_partZ,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+				//	if(rank!=0) printf("rank = %i and _partX = %g \n",rank,_partX);
 			}
 			
-			if(rank!=0) printf("rank = %i and _partX = %g \n",rank,_partX);
 		}
 	}
 
