@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 	double _res;
 	double _fX, _fY, _fZ; /* champ de force */
 	double _vX, _vY, _vZ; /* champ de vitesse */
-	double _recvbuf;
+	double _recvbufX, _recvbufY, _recvbufZ;
 
 	char *_coordX, *_coordY, *_coordZ;
 	char *tmp;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 /* Allocation des structures de données  */
 	/* _coordX _coordY _coordZ */
 	if(rank == 0) printf("bigsize is = %i bytes => %i doubles\n",bigsize,bigsize/sizeof(double));
-	MPI_Barrier(MPI_COMM_WORLD);
+//	MPI_Barrier(MPI_COMM_WORLD);
 	size = bigsize / computeprocs;
 
 	len = 8;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 	}
 /* Remplissage des structures de donnees */
 	/* Un fichier _coordX.'myrank' par processus (hors master) */
-	MPI_Barrier(MPI_COMM_WORLD);
+//	MPI_Barrier(MPI_COMM_WORLD);
 	if(rank!=0) {
 		tmp = (char *) malloc(len+10);
 		strcpy(tmp, _coordX);
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
 		}
 
-		MPI_Barrier(MPI_COMM_WORLD);
+//		MPI_Barrier(MPI_COMM_WORLD);
 		for(i=1; i<computeprocs ; i++) {
 			/* MAJ des structures de donnees sur le master, bloc par bloc */
 			if(rank==0) {
@@ -213,20 +213,44 @@ int main(int argc, char *argv[]) {
 					_vY = 0.0 ;
 					_vZ = 0.0 ;
 				}
-				MPI_Reduce(&_vX , &_recvbuf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-				MPI_Barrier(MPI_COMM_WORLD);
-//				if(rank == 0) printf("_recvbuf = %g\n",_recvbuf);
+				MPI_Reduce(&_vX , &_recvbufX, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+				MPI_Reduce(&_vY , &_recvbufY, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+				MPI_Reduce(&_vZ , &_recvbufZ, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+//				MPI_Barrier(MPI_COMM_WORLD);
+				if(rank == 0) {
+					bufX[j]+= deltat * _vX ;
+					bufY[j]+= deltat * _vY ;
+					bufZ[j]+= deltat * _vZ ;
+
+					MPI_File_open(MPI_COMM_SELF, _coordX, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhX);
+					MPI_File_set_view(fhX, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
+					MPI_File_iwrite(fhX, bufX, ndble, MPI_DOUBLE, &request);
+					//                      MPI_Wait( &request, &status );
+					MPI_File_close(&fhX);
+
+					MPI_File_open(MPI_COMM_SELF, _coordY, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhY);
+					MPI_File_set_view(fhY, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
+					MPI_File_iwrite(fhY, bufY, ndble, MPI_DOUBLE, &request);
+					//                      MPI_Wait( &request, &status );
+					MPI_File_close(&fhY);
+
+					MPI_File_open(MPI_COMM_SELF, _coordZ, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fhZ);
+					MPI_File_set_view(fhZ, 0, MPI_DOUBLE, MPI_DOUBLE, "native", MPI_INFO_NULL);
+					MPI_File_iwrite(fhZ, bufZ, ndble, MPI_DOUBLE, &request);
+					//                      MPI_Wait( &request, &status );
+					MPI_File_close(&fhZ);
+				}
 			}
 		}
 	}
 /* Verification des donnees */
 	if(rank != 0) {
-		for (i=0; i<ndble; i++) {
-			if ( bufX[i] != (rank*100000 + sqrt(i)) ) {
-				errs++;
-				fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, bufX[i], rank*100000+i);fflush(stderr);
-			}
-		}
+		   for (i=0; i<ndble; i++) {
+		   if ( bufX[i] != (rank*100000 + sqrt(i)) ) {
+		   errs++;
+		   fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, bufX[i], rank*100000+i);fflush(stderr);
+		   }
+		   }
 		free(bufX);
 		free(bufY);
 		free(bufZ);
