@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define bigsize (65536*16) // 16*1024*65536
+#define bigsize (65536) // 16*1024*65536
 #define iteration 1
 
 int main(int argc, char *argv[]) {
@@ -19,6 +19,11 @@ int main(int argc, char *argv[]) {
 	double *bufY; /* buffer des positions */
 	double *bufZ; /* buffer des positions */
 	double _partX, _partY, _partZ; /* positions de la particule etudiee  */
+	double _tmpX, _tmpY, _tmpZ; /* accumulateurs pour le calcul des forces sur chaque esclave */
+	double _sqrt;
+	double _cube;
+	double _inv;
+	double _res;
 	double _fX, _fY, _fZ; /* champ de force */
 
 	char *_coordX, *_coordY, *_coordZ;
@@ -182,6 +187,22 @@ int main(int argc, char *argv[]) {
 				MPI_Bcast(&_partX,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
 				MPI_Bcast(&_partY,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
 				MPI_Bcast(&_partZ,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+				if(rank != 0) {
+					_fX = 0.0;
+					_fY = 0.0;
+					_fZ = 0.0;
+					for(l=0;l<ndble;l++) {
+						_tmpX = bufX[l] - _partX ;
+						_tmpY = bufY[l] - _partY ;
+						_tmpZ = bufZ[l] - _partZ ;
+						_sqrt = sqrt(_tmpX * _tmpX + _tmpY * _tmpY + _tmpZ * _tmpZ) ;
+						_cube = _sqrt * _sqrt * _sqrt ;
+						_inv  = 1.0 / _cube ;
+						_fX = _fX + _inv * _tmpX ;
+						_fY = _fY + _inv * _tmpY ;
+						_fZ = _fZ + _inv * _tmpZ ;
+					}
+				}
 				//	if(rank!=0) printf("rank = %i and _partX = %g \n",rank,_partX);
 			}
 			
