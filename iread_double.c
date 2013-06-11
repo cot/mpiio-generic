@@ -6,6 +6,7 @@
 
 #define bigsize (65536) // 16*1024*65536
 #define iteration 1
+#define deltat 1
 
 int main(int argc, char *argv[]) {
 	int size;
@@ -25,6 +26,8 @@ int main(int argc, char *argv[]) {
 	double _inv;
 	double _res;
 	double _fX, _fY, _fZ; /* champ de force */
+	double _vX, _vY, _vZ; /* champ de vitesse */
+	double _recvbuf;
 
 	char *_coordX, *_coordY, *_coordZ;
 	char *tmp;
@@ -197,18 +200,25 @@ int main(int argc, char *argv[]) {
 						_tmpZ = bufZ[l] - _partZ ;
 						_sqrt = sqrt(_tmpX * _tmpX + _tmpY * _tmpY + _tmpZ * _tmpZ) ;
 						_cube = _sqrt * _sqrt * _sqrt ;
-						_inv  = 1.0 / _cube ;
+						_inv  = 1.0 / (_cube + 1e-12) ;
 						_fX = _fX + _inv * _tmpX ;
 						_fY = _fY + _inv * _tmpY ;
 						_fZ = _fZ + _inv * _tmpZ ;
+						_vX = -1.0 * deltat * _fX;
+						_vY = -1.0 * deltat * _fY;
+						_vZ = -1.0 * deltat * _fZ;
 					}
+				} else {
+					_vX = 0.0 ;
+					_vY = 0.0 ;
+					_vZ = 0.0 ;
 				}
-				//	if(rank!=0) printf("rank = %i and _partX = %g \n",rank,_partX);
+				MPI_Reduce(&_vX , &_recvbuf, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+				MPI_Barrier(MPI_COMM_WORLD);
+//				if(rank == 0) printf("_recvbuf = %g\n",_recvbuf);
 			}
-			
 		}
 	}
-
 /* Verification des donnees */
 	if(rank != 0) {
 		for (i=0; i<ndble; i++) {

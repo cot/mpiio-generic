@@ -1,5 +1,8 @@
 CC=mpicc
 
+debug: CC+= -g -pg
+debug: all
+
 all: iread_double.c
 	$(CC) iread_double.c -o iread_double
 
