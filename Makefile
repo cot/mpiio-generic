@@ -1,5 +1,8 @@
 CC=mpicc
 
+check: CC+= -DCHECK
+check: debug
+
 debug: CC+= -g -pg
 debug: all
 
