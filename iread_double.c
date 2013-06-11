@@ -255,7 +255,6 @@ int main(int argc, char *argv[]) {
 		printf("bufX[0] = %g \n",bufX[0]);
 		printf("bufY[0] = %g \n",bufY[0]);
 		printf("bufZ[0] = %g \n",bufZ[0]);
-totot
 	
 		free(bufX);
 		free(bufY);
