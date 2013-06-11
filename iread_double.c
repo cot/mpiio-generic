@@ -245,12 +245,18 @@ int main(int argc, char *argv[]) {
 	}
 /* Verification des donnees */
 	if(rank != 0) {
+		/*
 		   for (i=0; i<ndble; i++) {
 		   if ( bufX[i] != (rank*100000 + sqrt(i)) ) {
 		   errs++;
 		   fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, bufX[i], rank*100000+i);fflush(stderr);
 		   }
-		   }
+		 */
+		printf("bufX[0] = %g \n",bufX[0]);
+		printf("bufY[0] = %g \n",bufY[0]);
+		printf("bufZ[0] = %g \n",bufZ[0]);
+totot
+	
 		free(bufX);
 		free(bufY);
 		free(bufZ);
