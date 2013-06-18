@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define bigsize (65536) // 16*1024*65536
+#define bigsize (16*1024*65536) // 16*1024*65536
 #define iteration 1
 #define deltat 1
 
@@ -254,13 +254,14 @@ int main(int argc, char *argv[]) {
 
 	if(rank != 0) {
 #ifdef CHECK
-		   for (i=0; i<ndble; i++) {
-		   if ( bufX[i] != (rank*100000 + sqrt(i)) ) {
-		   errs++;
-		   fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, bufX[i], rank*100000+i);fflush(stderr);
-		   }
+		for (i=0; i<ndble; i++) {
+			if ( bufX[i] != (rank*100000 + sqrt(i)) ) {
+				errs++;
+				fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, bufX[i], rank*100000+i);fflush(stderr);
+			}
+		}
 #endif
-	
+
 		free(bufX);
 		free(bufY);
 		free(bufZ);
